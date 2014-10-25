@@ -32,7 +32,7 @@ class cuilib:
             if curses.ascii.isprint(c):
                 command += chr(c)
                 self.insert(chr(c))
-                if not possibilities:
+                if possibilities is not None:
                     possibilities = None
                 if cursor == cursor_max:
                     cursor_max += 1
@@ -41,10 +41,12 @@ class cuilib:
                 if cursor > 0:
                     cursor -= 1
                     self.move((default_cursor[0], default_cursor[1] + cursor))
+                    possibilities = None
             elif c == curses.KEY_RIGHT:
                 if cursor_max != cursor:
                     cursor += 1
                     self.move((default_cursor[0], default_cursor[1] + cursor))
+                    possibilities = None
             elif c == curses.KEY_ENTER:
                 self.stdscr.addch("\n")
                 return pc.parse(command)
@@ -57,7 +59,10 @@ class cuilib:
                         self.print(possibilities[selected], default_cursor)
                 elif len(possibilities) != 0:
                     selected = (selected + 1) % len(possibilities)
-                    self.print(possibilities[selected], default_cursor)
+                    after = ""
+                    if cursor < len(command) - 1:
+                        after = command[cursor + 1:]
+                    self.print(possibilities[selected] + after, default_cursor)
 
     def print(self, str, start=None):
         if start is not None:
