@@ -14,7 +14,7 @@ class cuilib:
     def getargv(self):
         return pc.parse_argv()
 
-    def get_command(self, prompt, func=lambda:):
+    def get_command(self, prompt, func=None):
         """
         return a command
         call func when user press tab
@@ -22,6 +22,7 @@ class cuilib:
         self.stdscr.addstr(prompt)
         default_cursor = self.stdscr.getyx() #coordinate of first command char
         cursor = 0 # relative x-coordinate
+        cursor_max = 0
         command = ""
         parsed = None
         possibilities = None #is None when not have possibilities
@@ -30,34 +31,42 @@ class cuilib:
             c = self.stdscr.getch()
             if curses.ascii.isprint(c):
                 command += chr(c)
-                self.stdscr.addch(chr(c))
+                self.insert(chr(c))
                 if not possibilities:
                     possibilities = None
+                if cursor == cursor_max:
+                    cursor_max += 1
+                cursor += 1
             elif c == curses.KEY_LEFT:
-                #TODO
-                pass
+                if cursor > 0:
+                    cursor -= 1
+                    self.move((default_cursor[0], default_cursor[1] + cursor))
             elif c == curses.KEY_RIGHT:
-                #TODO
-                pass
+                if cursor_max != cursor:
+                    cursor += 1
+                    self.move((default_cursor[0], default_cursor[1] + cursor))
             elif c == curses.KEY_ENTER:
                 self.stdscr.addch("\n")
                 return pc.parse(command)
-            elif c == ord("\t"):
+            elif c == ord("\t") and func is not None:
                 if possibilities is None:
                     selected = 0
                     parsed = pc.parce(command[0:cursor], True)
                     func(parsed)
                     if len(possibilities) > 0:
-                        self.stdscr.setyx(default_cursor)
-                        self.stdscr.clrtoeol()
-                        self.print(possiblilities[selected])
+                        self.print(possibilities[selected], default_cursor)
                 elif len(possibilities) != 0:
                     selected = (selected + 1) % len(possibilities)
+                    self.print(possibilities[selected], default_cursor)
 
     def print(self, str, start=None):
         if start is not None:
-            self.stdscr.move(start[0], start[1])
-
+            move(start[0])
+            self.stdscr.clrtoeol()
+        self.addstr(str)
 
     def insert(self, str):
         self.stdscr.insstr(str)
+
+    def move(self, cursor):
+        self.stdscr.move(cursor[0], cursor[1])
