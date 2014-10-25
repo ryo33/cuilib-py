@@ -112,8 +112,11 @@ class Cuilib:
             elif self.is_right(char):
                 self.__right()
             elif func is None or func(char):
-                self.__type(char)
-                self.print(chr(char), end="")
+                insert = self.__type(char)
+                if insert:
+                    self.insert(chr(char))
+                else:
+                    self.print(chr(char), end="")
 
     def get_password(self, func=curses.ascii.isgraph):
         """
@@ -136,12 +139,15 @@ class Cuilib:
             self.print("\b")
 
     def __type(self, char):
+        result = False
         if self.cursor == self.cursor_max:
             self.typing += chr(char)
         else:
             self.typing[:self.cursor] + chr(char) + self.typing[self.cursor:]
+            result = True
         self.cursor += 1
         self.cursor_max += 1
+        return result
 
     def __is_not_first_character(self):
         if self.cursor > 0:
