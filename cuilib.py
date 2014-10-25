@@ -62,13 +62,13 @@ class Cuilib:
                     parsed = pc.parce(self.typing[0:self.cursor], True)
                     func(parsed)
                     if len(possibilities) > 0:
-                        self.__print(possibilities[selected], self.default_cursor)
+                        self.print(possibilities[selected], end="", start=self.default_cursor)
                 elif len(possibilities) != 0:
                     selected = (selected + 1) % len(possibilities)
                     after = ""
                     if self.cursor < len(self.typing) - 1:
                         after = self.typing[self.cursor + 1:]
-                    self.__print(possibilities[selected] + after, self.default_cursor)
+                    self.print(possibilities[selected] + after, end="", start=self.default_cursor)
 
     def __get_char(self, func=None):
         """
@@ -93,7 +93,7 @@ class Cuilib:
         return chr(char)
 
     def input(self, prompt, func=None):
-        self.__print(prompt)
+        self.print(prompt, end="")
         return self.get_str(func)
 
     def get_str(self, func=None):
@@ -108,7 +108,7 @@ class Cuilib:
                 return self.typing
             elif func is None or func(char):
                 self.__type(char)
-                self.__print(chr(char))
+                self.print(chr(char), end="")
 
     def get_password(self, func=curses.ascii.isgraph):
         """
@@ -124,11 +124,11 @@ class Cuilib:
                 self.__type(char)
 
     def newline(self):
-        self.__print("\n")
+        self.print("")
 
     def __backspace(self):
         if __is_not_first_character():
-            self.__print("\b")
+            self.print("\b")
 
     def __type(self, char):
         self.typing += chr(char)
@@ -155,17 +155,11 @@ class Cuilib:
             return True
         return False
 
-    def __print(self, text, start=None):
+    def print(self, text, end="\n", start=None):
         if start is not None:
             move(start[0])
             self.stdscr.clrtoeol()
-        self.stdscr.addstr(str(text))
-
-    def print(self, text, start=None):
-        if start is not None:
-            move(start[0])
-            self.stdscr.clrtoeol()
-        self.stdscr.addstr(str(text) + "\n")
+        self.stdscr.addstr(str(text) + end)
 
     def insert(self, str):
         self.stdscr.insstr(str)
