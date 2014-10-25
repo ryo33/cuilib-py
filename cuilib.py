@@ -136,10 +136,12 @@ class Cuilib:
             self.print("\b")
 
     def __type(self, char):
-        self.typing += chr(char)
         if self.cursor == self.cursor_max:
-            self.cursor_max += 1
+            self.typing += chr(char)
+        else:
+            self.typing[:cursor] + chr(char) + self.typing[cursor:]
         self.cursor += 1
+        self.cursor_max += 1
 
     def __is_not_first_character(self):
         if self.cursor > 0:
