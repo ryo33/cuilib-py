@@ -83,19 +83,15 @@ class Cuilib:
 
     def wait(self, prompt=""):
         self.print(prompt, end="")
-        return get_char()
+        self.get_char(func=None)
     
-    def get_char(self, prompt="", func=None):
+    def get_char(self, prompt="", func=curses.ascii.isprint):
         """
         get_character
         func: example isprint, isalpha
         """
         self.print(prompt, end="")
-        while True:
-            char = self.stdscr.getch()
-            if func is None or func(char):
-                break
-        return chr(char)
+        return chr(self.__get_char(func))
 
     def input(self, prompt="", func=None):
         self.print(prompt, end="")
@@ -111,6 +107,10 @@ class Cuilib:
             if char == 10 or char == curses.KEY_ENTER:
                 self.newline()
                 return self.typing
+            elif self.is_left(char):
+                self.__left()
+            elif self.is_right(char):
+                self.__right()
             elif func is None or func(char):
                 self.__type(char)
                 self.print(chr(char), end="")
@@ -139,7 +139,7 @@ class Cuilib:
         if self.cursor == self.cursor_max:
             self.typing += chr(char)
         else:
-            self.typing[:cursor] + chr(char) + self.typing[cursor:]
+            self.typing[:self.cursor] + chr(char) + self.typing[self.cursor:]
         self.cursor += 1
         self.cursor_max += 1
 
@@ -149,7 +149,7 @@ class Cuilib:
         return False
 
     def __left(self):
-        if __is_not_first_character():
+        if self.__is_not_first_character():
             self.cursor -= 1
             self.move((self.default_cursor[0], self.default_cursor[1] + self.cursor))
             return True
@@ -174,6 +174,15 @@ class Cuilib:
     def move(self, cursor):
         self.stdscr.move(cursor[0], cursor[1])
 
+    def is_left(self, char):
+        if char == curses.KEY_LEFT:
+            return True
+        return False
+    
+    def is_right(self, char):
+        if char == curses.KEY_RIGHT:
+            return True
+        return False
 
 def __wrapper(stdscr, main):
     con = Cuilib(stdscr)
