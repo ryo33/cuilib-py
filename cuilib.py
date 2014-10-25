@@ -80,19 +80,24 @@ class Cuilib:
             if func is None or func(char):
                 break
         return char
+
+    def wait(self, prompt=""):
+        self.print(prompt, end="")
+        return get_char()
     
-    def get_char(self, func=None):
+    def get_char(self, prompt="", func=None):
         """
         get_character
         func: example isprint, isalpha
         """
+        self.print(prompt, end="")
         while True:
             char = self.stdscr.getch()
             if func is None or func(char):
                 break
         return chr(char)
 
-    def input(self, prompt, func=None):
+    def input(self, prompt="", func=None):
         self.print(prompt, end="")
         return self.get_str(func)
 
