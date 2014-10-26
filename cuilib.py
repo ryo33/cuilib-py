@@ -9,6 +9,7 @@ class Cuilib:
     cursor = 0
     cursor_max = 0
     typing = ""
+    command_history = []
 
     def __init__(self, stdscr):
         self.stdscr = stdscr
@@ -25,6 +26,7 @@ class Cuilib:
         if history is not None:
             selected_history = 0
             backup = None
+        possibilities = None #default is None
         self.init_typing()
         while True:
             char = self.__get_char()
@@ -42,33 +44,27 @@ class Cuilib:
                     if selected_history == 0:
                         backup = self.typing
                     selected_history += 1
-                    self.typing = history[-selected_history]
-                    self.print(self.typing, end="", start=self.default_cursor)
-                    self.cursor =  self.cursor_max = len(self.typing)
+                    self.__replace_typing(history[-selected_history])
             elif history is not None and self.is_down(char):
                 if selected_history > 1:
                     selected_history -= 1
-                    self.typing = history[-selected_history]
-                    self.print(self.typing, end="", start=self.default_cursor)
-                    self.cursor =  self.cursor_max = len(self.typing)
+                    self.__replace_typing(history[-selected_history])
                 elif selected_history == 1:
                     selected_history = 0
-                    self.typing = backup
-                    self.print(self.typing, end="", start=self.default_cursor)
-                    self.cursor =  self.cursor_max = len(self.typing)
+                    self.__replace_typing(backup)
             elif possibilities_func is not None and self.is_tab(char):
                 if possibilities is None:
                     selected = 0
                     parsed = pc.parce(self.typing[0:self.cursor], True)
-                    func(parsed)
+                    possibilities = possibilities_func(parsed)
                     if len(possibilities) > 0:
-                        self.print(possibilities[selected], end="", start=self.default_cursor)
+                        self.__replace_typing(possibilities[selected])
                 elif len(possibilities) != 0:
                     selected = (selected + 1) % len(possibilities)
                     after = ""
                     if self.cursor < len(self.typing) - 1:
                         after = self.typing[self.cursor + 1:]
-                    self.print(possibilities[selected] + after, end="", start=self.default_cursor)
+                    self.__replace_typing(possibilities[selected] + after)
             elif func is None or func(char):
                 insert = self.__type(char)
                 if option != "password":
@@ -78,6 +74,12 @@ class Cuilib:
                         self.print(chr(char), end="")
                 else:
                     self.right()
+
+    def get_command(self, func=None, history=None, possibilities_func=None):
+        if history is None:
+            history = self.command_history
+        self.command_history.append(self.get_str(func=func, history=history, possibilities_func=possibilities_func))
+        return pc.parse(self.command_history[-1])
 
     def get_argv(self):
         return pc.parse_argv()
@@ -146,6 +148,11 @@ class Cuilib:
         self.cursor += 1
         self.cursor_max += 1
         return result
+
+    def __replace_typing(self, text):
+        self.typing = text
+        self.print(self.typing, end="", start=self.default_cursor)
+        self.cursor =  self.cursor_max = len(self.typing)
 
     def __is_not_first_character(self):
         if self.cursor > 0:
