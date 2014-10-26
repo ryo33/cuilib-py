@@ -20,7 +20,7 @@ class Cuilib:
         """
         self.init_typing()
         while True:
-            char = self.__get_char(func=func)
+            char = self.__get_char()
             if char == 10 or char == curses.KEY_ENTER:
                 self.__newline()
                 return self.typing
@@ -108,7 +108,7 @@ class Cuilib:
     def wait(self, prompt=""):
         self.print(prompt, end="")
         self.stdscr.getch()
-    
+
     def get_char(self, prompt="", func=curses.ascii.isprint):
         """
         get_character
@@ -117,16 +117,16 @@ class Cuilib:
         self.print(prompt, end="")
         return chr(self.__get_char(func))
 
-    def input(self, prompt="", func=None):
+    def input(self, prompt="", func=curses.ascii.isprint):
         self.print(prompt, end="")
-        return self.get_str(func)
+        return self.get_str(func=func)
 
     def get_password(self, prompt, func=curses.ascii.isgraph):
         """
         getpassword
         """
         self.print(prompt, end="")
-        return self.get_str(option="password")
+        return self.get_str(option="password", func=func)
 
     def __newline(self):
         self.move((self.default_cursor[0], self.default_cursor[1] + self.cursor_max))
