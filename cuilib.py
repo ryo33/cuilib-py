@@ -14,6 +14,32 @@ class Cuilib:
         self.stdscr = stdscr
         self.stdscr.idcok(False)
 
+    def get_str(self, func=curses.ascii.isprint, option=None):
+        """
+        getstring
+        """
+        self.init_typing()
+        while True:
+            char = self.__get_char(func=func)
+            if char == 10 or char == curses.KEY_ENTER:
+                self.__newline()
+                return self.typing
+            elif self.is_left(char):
+                self.__left()
+            elif self.is_right(char):
+                self.__right()
+            elif self.is_bs(char):
+                self.__backspace()
+            elif func is None or func(char):
+                insert = self.__type(char)
+                if option != "password":
+                    if insert:
+                        self.insert(chr(char))
+                    else:
+                        self.print(chr(char), end="")
+                else:
+                    self.right()
+
     def get_argv(self):
         return pc.parse_argv()
 
@@ -95,47 +121,23 @@ class Cuilib:
         self.print(prompt, end="")
         return self.get_str(func)
 
-    def get_str(self, func=None):
-        """
-        getstring
-        """
-        self.init_typing()
-        while True:
-            char = self.__get_char()
-            if char == 10 or char == curses.KEY_ENTER:
-                self.__newline()
-                return self.typing
-            elif self.is_left(char):
-                self.__left()
-            elif self.is_right(char):
-                self.__right()
-            elif func is None or func(char):
-                insert = self.__type(char)
-                if insert:
-                    self.insert(chr(char))
-                else:
-                    self.print(chr(char), end="")
-
-    def get_password(self, func=curses.ascii.isgraph):
+    def get_password(self, prompt, func=curses.ascii.isgraph):
         """
         getpassword
         """
-        self.init_typing()
-        while True:
-            char = self.__get_char()
-            if char == curses.KEY_ENTER or char == 10:
-                self.newline()
-                return self.typing
-            elif func is None or func(char):
-                self.__type(char)
+        self.print(prompt, end="")
+        return self.get_str(option="password")
 
     def __newline(self):
         self.move((self.default_cursor[0], self.default_cursor[1] + self.cursor_max))
         self.print("")
 
     def __backspace(self):
-        if __is_not_first_character():
-            self.print("\b")
+        if self.__is_not_first_character():
+            self.__left()
+            self.stdscr.delch()
+            self.cursor_max -= 1
+            self.typing = self.typing[:self.cursor] + self.typing[self.cursor + 1:]
 
     def __type(self, char):
         result = False
@@ -205,6 +207,11 @@ class Cuilib:
 
     def is_right(self, char):
         if char == curses.KEY_RIGHT:
+            return True
+        return False
+
+    def is_bs(self, char):
+        if char == curses.KEY_BACKSPACE:
             return True
         return False
 
