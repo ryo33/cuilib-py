@@ -12,9 +12,7 @@ class Cuilib:
 
     def __init__(self, stdscr):
         self.stdscr = stdscr
-        curses.cbreak()
-        self.stdscr.keypad(True)
-        curses.noecho()
+        self.stdscr.idcok(False)
 
     def get_argv(self):
         return pc.parse_argv()
@@ -83,7 +81,7 @@ class Cuilib:
 
     def wait(self, prompt=""):
         self.print(prompt, end="")
-        self.get_char(func=None)
+        self.stdscr.getch()
     
     def get_char(self, prompt="", func=curses.ascii.isprint):
         """
@@ -105,7 +103,7 @@ class Cuilib:
         while True:
             char = self.__get_char()
             if char == 10 or char == curses.KEY_ENTER:
-                self.newline()
+                self.__newline()
                 return self.typing
             elif self.is_left(char):
                 self.__left()
@@ -131,7 +129,8 @@ class Cuilib:
             elif func is None or func(char):
                 self.__type(char)
 
-    def newline(self):
+    def __newline(self):
+        self.move((self.default_cursor[0], self.default_cursor[1] + self.cursor_max))
         self.print("")
 
     def __backspace(self):
@@ -143,7 +142,7 @@ class Cuilib:
         if self.cursor == self.cursor_max:
             self.typing += chr(char)
         else:
-            self.typing[:self.cursor] + chr(char) + self.typing[self.cursor:]
+            self.typing = self.typing[:self.cursor] + chr(char) + self.typing[self.cursor:]
             result = True
         self.cursor += 1
         self.cursor_max += 1
@@ -176,15 +175,34 @@ class Cuilib:
 
     def insert(self, str):
         self.stdscr.insstr(str)
+        self.right(len(str))
 
     def move(self, cursor):
         self.stdscr.move(cursor[0], cursor[1])
+
+    def right(self, move=1):
+        """
+        move cursor to right
+        """
+        cursor = self.get_cursor()
+        self.move((cursor[0], cursor[1] + move))
+
+    def left(self, move=1):
+        """
+        move cursor to right
+        """
+        cursor = self.get_cursor()
+        if cursor[1] > move - 1:
+            self.move((cursor[0], cursor[1] - move))
+
+    def get_cursor(self):
+        return self.stdscr.getyx()
 
     def is_left(self, char):
         if char == curses.KEY_LEFT:
             return True
         return False
-    
+
     def is_right(self, char):
         if char == curses.KEY_RIGHT:
             return True
