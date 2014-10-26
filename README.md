@@ -15,9 +15,9 @@ Library for console application in python
   from cuilib import *
   
   def main(con):
-    con.add_string("Hello World!\n") #display "Hello World!"
-    print con.getargv() #get a parsed sys.argv
-    print con.get_string("Enter anything > ") #get a string
+    con.add_string("Hello World!\n") #display "Hello World!" and end="\n"
+    print con.get_argv() #get a parsed sys.argv
+    print con.input("Enter anything > ") #get a string
     
   if __name__ == "__main__":
     wrapper(main)
