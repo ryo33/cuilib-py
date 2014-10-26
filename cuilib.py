@@ -14,10 +14,17 @@ class Cuilib:
         self.stdscr = stdscr
         self.stdscr.idcok(False)
 
-    def get_str(self, func=curses.ascii.isprint, option=None):
+    def get_str(self, func=curses.ascii.isprint, option=None, history=None, possibilities_func=None):
         """
         getstring
         """
+        if possibilities_func is not None:
+            parsed = None
+            possibilities = None #is None when not have possibilities
+            selected = 0 #possibilities[selected]
+        if history is not None:
+            selected_history = 0
+            backup = None
         self.init_typing()
         while True:
             char = self.__get_char()
@@ -30,6 +37,27 @@ class Cuilib:
                 self.__right()
             elif self.is_bs(char):
                 self.__backspace()
+            elif history is not None and self.is_up(char):
+                if len(history) > selected_history:
+                    if selected_history == 0:
+                        backup = self.typing
+                    selected_history += 1
+                    self.typing = history[-selected_history]
+                    self.print(self.typing, end="", start=self.default_cursor)
+                    self.cursor =  self.cursor_max = len(self.typing)
+            elif history is not None and self.is_down(char):
+                if selected_history > 1:
+                    selected_history -= 1
+                    self.typing = history[-selected_history]
+                    self.print(self.typing, end="", start=self.default_cursor)
+                    self.cursor =  self.cursor_max = len(self.typing)
+                elif selected_history == 1:
+                    selected_history = 0
+                    self.typing = backup
+                    self.print(self.typing, end="", start=self.default_cursor)
+                    self.cursor =  self.cursor_max = len(self.typing)
+            elif possibilities_func is not None and self.is_tab(char):
+                pass
             elif func is None or func(char):
                 insert = self.__type(char)
                 if option != "password":
@@ -59,9 +87,6 @@ class Cuilib:
         """
         self.init_typing()
         self.stdscr.addstr(prompt)
-        parsed = None
-        possibilities = None #is None when not have possibilities
-        selected = 0 #possibilities[selected]
         while True:
             c = self.stdscr.getch()
             if curses.ascii.isprint(c):
@@ -117,9 +142,9 @@ class Cuilib:
         self.print(prompt, end="")
         return chr(self.__get_char(func))
 
-    def input(self, prompt="", func=curses.ascii.isprint):
+    def input(self, prompt="", func=curses.ascii.isprint, history=None, possibilities_func=None):
         self.print(prompt, end="")
-        return self.get_str(func=func)
+        return self.get_str(func=func, history=history, possibilities_func=possibilities_func)
 
     def get_password(self, prompt, func=curses.ascii.isgraph):
         """
@@ -171,7 +196,7 @@ class Cuilib:
 
     def print(self, text, end="\n", start=None):
         if start is not None:
-            move(start[0])
+            self.move(start)
             self.stdscr.clrtoeol()
         self.stdscr.addstr(str(text) + end)
 
@@ -212,6 +237,21 @@ class Cuilib:
 
     def is_bs(self, char):
         if char == curses.KEY_BACKSPACE:
+            return True
+        return False
+
+    def is_up(self, char):
+        if char == curses.KEY_UP:
+            return True
+        return False
+    
+    def is_down(self, char):
+        if char == curses.KEY_DOWN:
+            return True
+        return False
+
+    def is_tab(self, char):
+        if char == ord("\t"):
             return True
         return False
 
