@@ -57,7 +57,18 @@ class Cuilib:
                     self.print(self.typing, end="", start=self.default_cursor)
                     self.cursor =  self.cursor_max = len(self.typing)
             elif possibilities_func is not None and self.is_tab(char):
-                pass
+                if possibilities is None:
+                    selected = 0
+                    parsed = pc.parce(self.typing[0:self.cursor], True)
+                    func(parsed)
+                    if len(possibilities) > 0:
+                        self.print(possibilities[selected], end="", start=self.default_cursor)
+                elif len(possibilities) != 0:
+                    selected = (selected + 1) % len(possibilities)
+                    after = ""
+                    if self.cursor < len(self.typing) - 1:
+                        after = self.typing[self.cursor + 1:]
+                    self.print(possibilities[selected] + after, end="", start=self.default_cursor)
             elif func is None or func(char):
                 insert = self.__type(char)
                 if option != "password":
@@ -79,45 +90,6 @@ class Cuilib:
         self.cursor = 0 # relative x-coordinate
         self.cursor_max = 0
         self.typing = ""
-
-    def get_command(self, prompt, func=None):
-        """
-        return a command
-        call func when user press tab
-        """
-        self.init_typing()
-        self.stdscr.addstr(prompt)
-        while True:
-            c = self.stdscr.getch()
-            if curses.ascii.isprint(c):
-                self.__type(chr(c))
-                self.insert(chr(c))
-                if possibilities is not None:
-                    possibilities = None
-            elif c == curses.KEY_LEFT:
-                if self.__left():
-                    possibilities = None
-            elif c == curses.KEY_RIGHT:
-                if self.__right():
-                    possibilities = None
-            elif c == curses.KEY_ENTER:
-                self.newline
-                return pc.parse(command)
-            elif c == curses.ascii.BS:
-                self.__backspace()
-            elif c == ord("\t") and func is not None:
-                if possibilities is None:
-                    selected = 0
-                    parsed = pc.parce(self.typing[0:self.cursor], True)
-                    func(parsed)
-                    if len(possibilities) > 0:
-                        self.print(possibilities[selected], end="", start=self.default_cursor)
-                elif len(possibilities) != 0:
-                    selected = (selected + 1) % len(possibilities)
-                    after = ""
-                    if self.cursor < len(self.typing) - 1:
-                        after = self.typing[self.cursor + 1:]
-                    self.print(possibilities[selected] + after, end="", start=self.default_cursor)
 
     def __get_char(self, func=None):
         """
@@ -252,6 +224,11 @@ class Cuilib:
 
     def is_tab(self, char):
         if char == ord("\t"):
+            return True
+        return False
+
+    def is_ctrl_tab(self, char):
+        if char == 353:
             return True
         return False
 
