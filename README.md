@@ -1,4 +1,3 @@
-cuilibpy
-========
-
-Library for cui software in python
+cuilib-py
+=========
+Library for console application in python
